@@ -105,7 +105,7 @@ int flag_botao = 0;
 int estado_menu = 0;
 int tecla_pressionada;
 int flag_coleta = 0;
-int flag_escrita = 0;
+int flag_transf_dados = 0;
 int n = 11;
 int acumuladora;
 
@@ -121,8 +121,8 @@ void maquina_menu();
 void escrever(unsigned int add, unsigned char dado);
 unsigned char ler(unsigned int add);
 void separa(float temperatura);
-unsigned int armazena_temperatura(unsigned int p, uint8_t p1, uint8_t p2, unsigned char byte1, unsigned char byte2);
-void reset(unsigned int p);
+unsigned int armazena_temperatura();
+void reset();
 void codigo_I2C(unsigned long codigo);
 void aciona_display(int M, int Cen, int D, int U, int display);
 
@@ -176,6 +176,11 @@ void escrever(unsigned int add, unsigned char dado)
     unsigned char Device_Adress = fixo + ((add >> 8) & 0xFF); 	//Define o Device_Adress como sendo o valor fixo + os 3 bits MSB de add
     unsigned char end_memoria = (add & 0xFF); 				//Define o end_memoria sendo os 8 bits LSB de add
 
+    //Serial.print("endereco:");
+    //Serial.println(add);
+    //Serial.print("dado:");
+    //Serial.println(dado);
+
     Wire.beginTransmission(Device_Adress); 				// Inicia a comunicação com o AT24C16
     Wire.write(end_memoria); 							//Escreve os 8 bits restantes do endereço da memória
     Wire.write(dado); 								//Escreve os 8 bits de dados
@@ -215,7 +220,8 @@ void loop()
     separa(temperatura); //Chama a função para separar os dígitos do valor lido de temperatura para ser mostrado nos displays da maneira desejada
     if ((flag_coleta == 1) && (p < 2046))
     {
-      p = armazena_temperatura(p, p1, p2, byte1, byte2);
+      //Serial.println("Entrei armazena_temperatura");
+      p = armazena_temperatura();
     }
     else if ((flag_coleta == 1) && (p > 2045))
     {
@@ -312,6 +318,11 @@ void separa(float temperatura) //Separa os digítidos do milhar, centena, dezena
   
   	byte1 = (temp/ 100) % 100;   // Primeiro byte - Ex: 2043 => byte1 = 20
   	byte2 = temp % 100;           // Segundo byte => Ex: 2043 => byte2 = 43
+
+    //Serial.print("byte1:");
+  	//Serial.println(byte1);
+    //Serial.print("byte2:");
+    //Serial.println(byte2);
   
     //Casa dos milhares
 	if((temp/1000) < 1){
@@ -358,14 +369,24 @@ void separa(float temperatura) //Separa os digítidos do milhar, centena, dezena
 
 }
 
-unsigned int armazena_temperatura(unsigned int p, uint8_t p1, uint8_t p2, unsigned char byte1, unsigned char byte2)
+unsigned int armazena_temperatura()
 {
   unsigned int ponteiro;
   ponteiro = p;
+  //Serial.print("armazena_temperatura(): ponteiro:");
+  //Serial.println(ponteiro);
   escrever(ponteiro, byte1); //0x7fe = 2047 (última posição da memória) => Escrevo o primeiro byte do ponteiro em 2047
+  //Serial.print("Valor byte1: ");
+  //Serial.println(ler(ponteiro));
   ponteiro++;
+  //Serial.print("armazena_temperatura(): ponteiro:");
+  //Serial.println(ponteiro); 
   escrever(ponteiro, byte2);
+  //Serial.print("Valor byte2: ");
+  //Serial.println(ler(ponteiro));
   ponteiro++;
+  //Serial.print("ponteiro:");
+  //Serial.println(ponteiro);
   p1 = (ponteiro/ 100) % 100; 
   p2 = ponteiro % 100;
   escrever(0x7fe, p1);
@@ -376,11 +397,15 @@ unsigned int armazena_temperatura(unsigned int p, uint8_t p1, uint8_t p2, unsign
   return ponteiro; 
 }
 
-void reset(unsigned int p)
+void reset()
 {
   p = 0;
   escrever(0x7fe, 0x00);
-  escrever(0x7ff, 0x00);  
+  escrever(0x7ff, 0x00);
+  //Serial.print("Leitura da posicao 2046");
+  //Serial.println(ler(0x7fe));
+  //Serial.print("Leitura da posicao 2047");
+  //Serial.println(ler(0x7ff));
 }
 
 void maquina_teclado()
@@ -557,18 +582,20 @@ void tecla()
   if ((estado_anterior == 0) && (Ca[0] == 0)) //Linha 1/Coluna 1 
   {
     tecla_pressionada = 1;
-    if(flag_escrita == 1)
+    if((flag_botao == 1) && (flag_transf_dados == 1))
     {
+      Serial.print("Cliquei no 1");
       lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
       lcd.print("1");
       n++;
+
     }
   }
   
   else if ((estado_anterior == 0) && (Ca[1] == 0)) //Linha 1/Coluna 2
   {
     tecla_pressionada = 2;
-    if(flag_escrita == 1)
+    if((flag_botao == 1) && (flag_transf_dados == 1))
     {
       lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
       lcd.print("2");
@@ -580,7 +607,7 @@ void tecla()
   else if ((estado_anterior == 0) && (Ca[2] == 0)) //Linha 1/Coluna 3
   {
     tecla_pressionada = 3;
-    if(flag_escrita == 1)
+    if((flag_botao == 1) && (flag_transf_dados == 1))
     {
       lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
       lcd.print("3");
@@ -591,7 +618,7 @@ void tecla()
   else if ((estado_anterior == 1) && (Ca[0] == 0)) //Linha 2/Coluna 1
   {
     tecla_pressionada = 4;
-    if(flag_escrita == 1)
+    if((flag_botao == 1) && (flag_transf_dados == 1))
     {
       lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
       lcd.print("4");
@@ -602,7 +629,7 @@ void tecla()
   else if ((estado_anterior == 1) && (Ca[1] == 0)) //Linha 2/Coluna 2
   {
     tecla_pressionada = 5;
-    if(flag_escrita == 1)
+    if((flag_botao == 1) && (flag_transf_dados == 1))
     {
       lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
       lcd.print("5");
@@ -613,7 +640,7 @@ void tecla()
   else if ((estado_anterior == 1) && (Ca[2] == 0)) //Linha 2/Coluna 3
   {
     tecla_pressionada = 6;
-    if(flag_escrita == 1)
+    if((flag_botao == 1) && (flag_transf_dados == 1))
     {
       lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
       lcd.print("6");
@@ -624,7 +651,7 @@ void tecla()
   else if ((estado_anterior == 2) && (Ca[0] == 0)) //Linha 3/Coluna 1
   {
     tecla_pressionada = 7;
-    if(flag_escrita == 1)
+    if((flag_botao == 1) && (flag_transf_dados == 1))
     {
       lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
       lcd.print("7");
@@ -635,7 +662,7 @@ void tecla()
   else if ((estado_anterior == 2) && (Ca[1] == 0)) //Linha 3/Coluna 2
   {
     tecla_pressionada = 8;
-    if(flag_escrita == 1)
+    if((flag_botao == 1) && (flag_transf_dados == 1))
     {
       lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
       lcd.print("8");
@@ -646,7 +673,7 @@ void tecla()
   else if ((estado_anterior == 2) && (Ca[2] == 0)) //Linha 3/Coluna 3
   {
     tecla_pressionada = 9;
-    if(flag_escrita == 1)
+    if((flag_botao == 1) && (flag_transf_dados == 1))
     {
       lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
       lcd.print("9");
@@ -662,7 +689,7 @@ void tecla()
   else if ((estado_anterior == 3) && (Ca[1] == 0)) //Linha 4/Coluna 2
   {
     tecla_pressionada = 0;
-    if(flag_escrita == 1)
+    if((flag_botao == 1) && (flag_transf_dados == 1))
     {
       lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
       lcd.print("0");
@@ -693,7 +720,11 @@ void tecla()
   if (n == 15)
   {
     acumuladora += tecla_pressionada * 1;
+    flag_transf_dados = 0;
+    n = 0;
   }
+  Serial.print("acumuladora:");
+  Serial.println(acumuladora);
     
 }
 
@@ -851,7 +882,7 @@ void maquina_menu()
           lcd.setCursor(0, 1); //Define a posição 0 da linha 1 para começar a escrever
           lcd.print("LIMPANDO MEMORIA"); //Escreve "PARADO" e apaga tudo na sua frente se houver
 
-          reset(p);
+          reset();
           estado_menu = 0;
 
           break;
@@ -861,13 +892,17 @@ void maquina_menu()
         {
           unsigned int gravado, disponivel;
           gravado = p/2;
+          Serial.print("gravado: ");
+          Serial.println(gravado);
           disponivel = 1023 - gravado;
+          Serial.print("disponivel: ");
+          Serial.println(disponivel);
           //Config do LCD:
           lcd.setCursor(0, 0); //Define a posição 0 da linha 0 para começar a escrever
-          lcd.print("GRAVADO:        "); //Escreve "PARADO" e apaga tudo na sua frente se houver
+          lcd.print("GRAVADO: "); //Escreve "PARADO" e apaga tudo na sua frente se houver
           lcd.print(gravado); 
           lcd.setCursor(0, 1); //Define a posição 0 da linha 1 para começar a escrever
-          lcd.print("DISPONIVEL:     "); //Escreve "PARADO" e apaga tudo na sua frente se houver
+          lcd.print("DISPONIVEL: "); //Escreve "PARADO" e apaga tudo na sua frente se houver
           lcd.print(disponivel); 
 
           estado_menu = 0;
@@ -921,9 +956,9 @@ void maquina_menu()
             lcd.setCursor(0, 0); //Define a posição 0 da linha 0 para começar a escrever
             lcd.print("TRANSF. DADOS   "); //Escreve "PARADO" e apaga tudo na sua frente se houver 
             lcd.setCursor(0, 1); //Define a posição 0 da linha 1 para começar a escrever
-            lcd.print("ESC. QTDE:      "); //Escreve "PARADO" e apaga tudo na sua frente se houver
+            lcd.print("ESC. QTDE: "); //Escreve "PARADO" e apaga tudo na sua frente se houver
 
-            flag_escrita = 1;
+            flag_transf_dados = 1;
 
             break;
 
