@@ -1020,6 +1020,7 @@ void maquina_menu()
           Serial.println("Entrei no estado 10");
           Serial.print("acumuladora:");
           Serial.println(acumuladora);
+          //Falta fazer essa maquina
           break;
         }
     
