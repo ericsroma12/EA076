@@ -108,6 +108,7 @@ int flag_coleta = 0;
 int flag_transf_dados = 0;
 int n = 11;
 int acumuladora;
+unsigned int gravado, disponivel;
 
 //Variáveis de definição dos pinos do Arduino conectados ao LCD
 LiquidCrystal lcd(12, 11, 10, 8, 9, 13);
@@ -176,10 +177,10 @@ void escrever(unsigned int add, unsigned char dado)
     unsigned char Device_Adress = fixo + ((add >> 8) & 0xFF); 	//Define o Device_Adress como sendo o valor fixo + os 3 bits MSB de add
     unsigned char end_memoria = (add & 0xFF); 				//Define o end_memoria sendo os 8 bits LSB de add
 
-    //Serial.print("endereco:");
-    //Serial.println(add);
-    //Serial.print("dado:");
-    //Serial.println(dado);
+    Serial.print("endereco:");
+    Serial.println(add);
+    Serial.print("dado:");
+    Serial.println(dado);
 
     Wire.beginTransmission(Device_Adress); 				// Inicia a comunicação com o AT24C16
     Wire.write(end_memoria); 							//Escreve os 8 bits restantes do endereço da memória
@@ -206,6 +207,10 @@ unsigned char ler(unsigned int add)
         c_memoria = Wire.read();   						// Recebe 1 byte como char 				
         
     }
+    //Serial.print("endereco:");
+    //Serial.println(add);
+    //Serial.print("dado:");
+    //Serial.println(c_memoria);
 
     return c_memoria;								//Função ler retorna c sendo o byte lido de leitura
 }
@@ -371,30 +376,40 @@ void separa(float temperatura) //Separa os digítidos do milhar, centena, dezena
 
 unsigned int armazena_temperatura()
 {
-  unsigned int ponteiro;
-  ponteiro = p;
+  uint8_t p3, p4;
   //Serial.print("armazena_temperatura(): ponteiro:");
   //Serial.println(ponteiro);
-  escrever(ponteiro, byte1); //0x7fe = 2047 (última posição da memória) => Escrevo o primeiro byte do ponteiro em 2047
+  if (p!=0)
+    p++;
+  escrever(p, byte1); //0x7fe = 2047 (última posição da memória) => Escrevo o primeiro byte do ponteiro em 2047
   //Serial.print("Valor byte1: ");
   //Serial.println(ler(ponteiro));
-  ponteiro++;
+  p++;
   //Serial.print("armazena_temperatura(): ponteiro:");
   //Serial.println(ponteiro); 
-  escrever(ponteiro, byte2);
+  escrever(p, byte2);
   //Serial.print("Valor byte2: ");
   //Serial.println(ler(ponteiro));
-  ponteiro++;
+  //p++;
   //Serial.print("ponteiro:");
   //Serial.println(ponteiro);
-  p1 = (ponteiro/ 100) % 100; 
-  p2 = ponteiro % 100;
+  p1 = (p/ 100) % 100; 
+  p2 = p % 100;
+  //p++;
+  Serial.print("p1: ");
+  Serial.println(p1);
+  Serial.print("p2: ");
+  Serial.println(p2);
   escrever(0x7fe, p1);
   escrever(0x7ff, p2);
-  p1 = ler(0x7fe);
-  p2 = ler(0x7ff);
+  p3 = ler(0x7fe);
+  p4 = ler(0x7ff);
+  //Serial.print("p3: ");
+  //Serial.println(p3);
+  //Serial.print("p4: ");
+  //Serial.println(p4);
   
-  return ponteiro; 
+  return p; 
 }
 
 void reset()
@@ -577,6 +592,10 @@ void atualiza_C()
 
 void tecla()
 {
+  //Serial.print("flag_transf_dados: ");
+  //Serial.println(flag_transf_dados);
+  //Serial.print("n: ");
+  //Serial.println(n);
   //Serial.print("tecla pressionada: ");
   //Serial.println(tecla_pressionada);  
   if ((estado_anterior == 0) && (Ca[0] == 0)) //Linha 1/Coluna 1 
@@ -584,7 +603,7 @@ void tecla()
     tecla_pressionada = 1;
     if((flag_botao == 1) && (flag_transf_dados == 1))
     {
-      Serial.print("Cliquei no 1");
+      //Serial.print("Cliquei no 1");
       lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
       lcd.print("1");
       n++;
@@ -723,8 +742,8 @@ void tecla()
     flag_transf_dados = 0;
     n = 0;
   }
-  Serial.print("acumuladora:");
-  Serial.println(acumuladora);
+  //Serial.print("acumuladora:");
+  //Serial.println(acumuladora);
     
 }
 
@@ -890,12 +909,11 @@ void maquina_menu()
         
     case 7:						
         {
-          unsigned int gravado, disponivel;
           gravado = p/2;
-          Serial.print("gravado: ");
+          //Serial.print("gravado: ");
           Serial.println(gravado);
           disponivel = 1023 - gravado;
-          Serial.print("disponivel: ");
+          //Serial.print("disponivel: ");
           Serial.println(disponivel);
           //Config do LCD:
           lcd.setCursor(0, 0); //Define a posição 0 da linha 0 para começar a escrever
@@ -927,14 +945,14 @@ void maquina_menu()
     
     case 9:						
         {
-          unsigned int gravado;
-          gravado = p/2;
+          unsigned int coletado = 0;
+          coletado = p/2 - gravado;
           //Config do LCD:
           lcd.setCursor(0, 0); //Define a posição 0 da linha 0 para começar a escrever
           lcd.print("STOP: FIM       "); //Escreve "PARADO" e apaga tudo na sua frente se houver 
           lcd.setCursor(0, 1); //Define a posição 0 da linha 1 para começar a escrever
-          lcd.print("No DADOS:       "); //Escreve "PARADO" e apaga tudo na sua frente se houver
-          lcd.print(gravado);
+          lcd.print("No DADOS: "); //Escreve "PARADO" e apaga tudo na sua frente se houver
+          lcd.print(coletado);
 
           flag_coleta = 0;
 
@@ -945,7 +963,9 @@ void maquina_menu()
     
     case 10:						
         {
-
+          //Serial.println("Entrei no estado 10");
+          //Serial.print("acumuladora:");
+          //Serial.println(acumuladora);
           break;
         }
     
@@ -959,6 +979,8 @@ void maquina_menu()
             lcd.print("ESC. QTDE: "); //Escreve "PARADO" e apaga tudo na sua frente se houver
 
             flag_transf_dados = 1;
+
+            estado_menu = 10;
 
             break;
 
