@@ -900,10 +900,19 @@ void maquina_menu()
     
     case 10:						
         {
-          Serial.println("Entrei no estado 10");
-          Serial.print("acumuladora:");
-          Serial.println(acumuladora);
-          //Falta fazer essa maquina
+          int a;
+          int b;
+          int j;
+          for (j = 0; j <= acumuladora*2; j += 2)
+          {
+              a = ler(j);
+              b = ler(j+1);
+              Serial.print("T = ");
+              Serial.print(a);
+              Serial.print(".");
+              Serial.println(b);
+          }
+
           estado_menu = 0;
           break;
         }
@@ -927,8 +936,8 @@ void maquina_menu()
             {
               n++;
               lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
-              Serial.print("tecla pressionada: ");
-              Serial.println(tecla_pressionada);
+              //Serial.print("tecla pressionada: ");
+              //Serial.println(tecla_pressionada);
               lcd.print(tecla_pressionada);
             }
           }
@@ -936,32 +945,32 @@ void maquina_menu()
           if ((n == 11) && (flag_botao == 1))
             {
               acumuladora = tecla_pressionada * 1000;
-              Serial.print("acumuladora:");
-              Serial.println(acumuladora);
+              //Serial.print("acumuladora:");
+              //Serial.println(acumuladora);
               flag_botao = 0;
             }
 
           if ((n == 12) && (flag_botao == 1))
             {
               acumuladora += tecla_pressionada * 100;
-              Serial.print("acumuladora:");
-              Serial.println(acumuladora);
+              //Serial.print("acumuladora:");
+              //Serial.println(acumuladora);
               flag_botao = 0;
             }
 
           if ((n == 13) && (flag_botao == 1))
             {
               acumuladora += tecla_pressionada * 10;
-              Serial.print("acumuladora:");
-              Serial.println(acumuladora);
+              //Serial.print("acumuladora:");
+              //Serial.println(acumuladora);
               flag_botao = 0;
             }
 
           if ((n == 14) && (flag_botao == 1) && (tecla_pressionada != 11))
             {
               acumuladora += tecla_pressionada * 1;
-              Serial.print("acumuladora:");
-              Serial.println(acumuladora);
+              //Serial.print("acumuladora:");
+              //Serial.println(acumuladora);
               flag_botao = 0;
             }
 
@@ -975,7 +984,32 @@ void maquina_menu()
           else if ((tecla_pressionada == 11) && (n == 14))	//11 = # = SIM
           {
             n = 10;
-            estado_menu = 10;
+            if (acumuladora <= gravado)
+            {
+              estado_menu = 10;
+            }
+
+            else if (acumuladora > 1022)
+            {
+              //Config do LCD:
+              lcd.setCursor(0, 0); //Define a posição 0 da linha 0 para começar a escrever
+              lcd.print("QTDE. EXCEDIDA! "); //Escreve "PARADO" e apaga tudo na sua frente se houver 
+              lcd.setCursor(0, 1); //Define a posição 0 da linha 1 para começar a escrever
+              lcd.print("MAX: 1022       "); //Escreve "PARADO" e apaga tudo na sua frente se houver
+              estado_menu = 0;
+            }
+
+            else if (acumuladora > gravado)
+            {
+              //Config do LCD:
+              lcd.setCursor(0, 0); //Define a posição 0 da linha 0 para começar a escrever
+              lcd.print("QTDE. DISPONIVEL"); //Escreve "PARADO" e apaga tudo na sua frente se houver 
+              lcd.setCursor(0, 1); //Define a posição 0 da linha 1 para começar a escrever
+              lcd.print("                ");
+              lcd.setCursor(0, 1); 
+              lcd.print(gravado); //Escreve "PARADO" e apaga tudo na sua frente se houver
+              estado_menu = 0;
+            }
             flag_botao = 0;
           }
 
