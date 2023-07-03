@@ -107,9 +107,10 @@ int estado_menu = 0;
 int tecla_pressionada;
 int flag_coleta = 0;
 int flag_transf_dados = 0;
-int n = 11;
-int acumuladora;
+int n = 10;
+int acumuladora = 0;
 unsigned int gravado, disponivel;
+int flag_botao = 0;
 
 //Variáveis de definição dos pinos do Arduino conectados ao LCD
 LiquidCrystal lcd(12, 11, 10, 8, 9, 13);
@@ -178,10 +179,10 @@ void escrever(unsigned int add, unsigned char dado)
     unsigned char Device_Adress = fixo + ((add >> 8) & 0xFF); 	//Define o Device_Adress como sendo o valor fixo + os 3 bits MSB de add
     unsigned char end_memoria = (add & 0xFF); 				//Define o end_memoria sendo os 8 bits LSB de add
 
-    Serial.print("endereco:");
-    Serial.println(add);
-    Serial.print("dado:");
-    Serial.println(dado);
+    //Serial.print("endereco:");
+    //Serial.println(add);
+    //Serial.print("dado:");
+    //Serial.println(dado);
 
     Wire.beginTransmission(Device_Adress); 				// Inicia a comunicação com o AT24C16
     Wire.write(end_memoria); 							//Escreve os 8 bits restantes do endereço da memória
@@ -383,7 +384,6 @@ void separa(float temperatura) //Separa os digítidos do milhar, centena, dezena
 
 unsigned int armazena_temperatura()
 {
-  uint8_t p3, p4;
   //Serial.print("armazena_temperatura(): ponteiro:");
   //Serial.println(ponteiro);
   if (p!=0)
@@ -403,14 +403,8 @@ unsigned int armazena_temperatura()
   p1 = (p/ 100) % 100; 
   p2 = p % 100;
   //p++;
-  Serial.print("p1: ");
-  Serial.println(p1);
-  Serial.print("p2: ");
-  Serial.println(p2);
   escrever(0x7fe, p1);
   escrever(0x7ff, p2);
-  p3 = ler(0x7fe);
-  p4 = ler(0x7ff);
   //Serial.print("p3: ");
   //Serial.println(p3);
   //Serial.print("p4: ");
@@ -545,7 +539,8 @@ void maquina_teclado()
     
     case 6:						// Vai chamar a função tecla para detecção da tecla que foi pressionada
     {
-    	tecla();		
+    	tecla();
+      flag_botao = 1;	
       estado = 7;
       break;
     }
@@ -556,8 +551,11 @@ void maquina_teclado()
       {
         estado = 7;
       }
-      contador_teclado = 0;
-	    estado = 8;
+      if ((C[0] == 1) && (C[1] == 1) && (C[2] == 1))
+      {
+        contador_teclado = 0;
+	      estado = 8;
+      }
       break;    
     }
     
@@ -573,6 +571,7 @@ void maquina_teclado()
       }
       else
       {
+        flag_botao = 0;
         estado = 0; //L = [0111]			// Volta para o estado 0 e reinicia o ciclo
         digitalWrite(A0, LOW); // set 1 low
         digitalWrite(2, HIGH);  // set 2 high
@@ -603,199 +602,66 @@ void tecla()
   //Serial.print("tecla pressionada: ");
   //Serial.println(tecla_pressionada);  
   if ((estado_anterior == 0) && (Ca[0] == 0)) //Linha 1/Coluna 1 
-  {
-    tecla_pressionada = 1;
-    if(flag_transf_dados == 1)
     {
-      contador_debounce = 0;
-      if (flag_debounce == 1)
-      {
-        flag_debounce = 0;
-        //Serial.print("Cliquei no 1");
-        lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
-        lcd.print("1");
-        n++;
-      }
-
+      tecla_pressionada = 1;
     }
-  }
   
   else if ((estado_anterior == 0) && (Ca[1] == 0)) //Linha 1/Coluna 2
-  {
-    tecla_pressionada = 2;
-    if(flag_transf_dados == 1)
     {
-      contador_debounce = 0;
-      if (flag_debounce == 1)
-      {
-        flag_debounce = 0;
-        lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
-        lcd.print("2");
-        n++;
-      }
-    } 
-
-  }
+      tecla_pressionada = 2;
+    }
   
   else if ((estado_anterior == 0) && (Ca[2] == 0)) //Linha 1/Coluna 3
-  {
-    tecla_pressionada = 3;
-    if(flag_transf_dados == 1)
     {
-      contador_debounce = 0;
-      if (flag_debounce == 1)
-      {
-        flag_debounce = 0;
-        lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
-        lcd.print("3");
-        n++;
-      }
-    }  
-  }
+      tecla_pressionada = 3; 
+    }
   
   else if ((estado_anterior == 1) && (Ca[0] == 0)) //Linha 2/Coluna 1
-  {
-    tecla_pressionada = 4;
-    if(flag_transf_dados == 1)
     {
-      contador_debounce = 0;
-      if (flag_debounce == 1)
-      {
-        flag_debounce = 0;
-        lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
-        lcd.print("4");
-        n++;
-      }
+      tecla_pressionada = 4;
     }
-  }
   
   else if ((estado_anterior == 1) && (Ca[1] == 0)) //Linha 2/Coluna 2
-  {
-    tecla_pressionada = 5;
-    if(flag_transf_dados == 1)
     {
-      contador_debounce = 0;
-      if (flag_debounce == 1)
-      {
-        flag_debounce = 0;
-        lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
-        lcd.print("5");
-        n++;
-      }
+      tecla_pressionada = 5;
     }
-  }
   
   else if ((estado_anterior == 1) && (Ca[2] == 0)) //Linha 2/Coluna 3
-  {
-    tecla_pressionada = 6;
-    if(flag_transf_dados == 1)
     {
-      contador_debounce = 0;
-      if (flag_debounce == 1)
-      {
-        flag_debounce = 0;
-        lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
-        lcd.print("6");
-        n++;
-      }
+      tecla_pressionada = 6;
     }
-  }
   
   else if ((estado_anterior == 2) && (Ca[0] == 0)) //Linha 3/Coluna 1
-  {
-    tecla_pressionada = 7;
-    if(flag_transf_dados == 1)
     {
-      contador_debounce = 0;
-      if (flag_debounce == 1)
-      {
-        flag_debounce = 0;
-        lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
-        lcd.print("7");
-        n++;
-      }
+      tecla_pressionada = 7;
     }
-  }
-  
+    
   else if ((estado_anterior == 2) && (Ca[1] == 0)) //Linha 3/Coluna 2
-  {
-    tecla_pressionada = 8;
-    if(flag_transf_dados == 1)
     {
-      contador_debounce = 0;
-      if (flag_debounce == 1)
-      {
-        flag_debounce = 0;
-        lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
-        lcd.print("8");
-        n++;
-      }
+      tecla_pressionada = 8;
     }
-  }
   
   else if ((estado_anterior == 2) && (Ca[2] == 0)) //Linha 3/Coluna 3
-  {
-    tecla_pressionada = 9;
-    if(flag_transf_dados == 1)
     {
-      contador_debounce = 0;
-      if (flag_debounce == 1)
-      {
-        flag_debounce = 0;
-        lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
-        lcd.print("9");
-        n++;
-      }
+      tecla_pressionada = 9;
     }
-  }
   
   else if ((estado_anterior == 3) && (Ca[0] == 0)) //Linha 4/Coluna 1
-  {
-    tecla_pressionada = 10; //10 = * = NAO
-  }
+    {
+      tecla_pressionada = 10; //10 = * = NAO
+    }
   
   else if ((estado_anterior == 3) && (Ca[1] == 0)) //Linha 4/Coluna 2
-  {
-    tecla_pressionada = 0;
-    if(flag_transf_dados == 1)
     {
-      contador_debounce = 0;
-      if (flag_debounce == 1)
-      {
-        flag_debounce = 0;
-        lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
-        lcd.print("0");
-        n++;
-      }
+      tecla_pressionada = 0;
     }
-  }
   
   else if ((estado_anterior == 3) && (Ca[2] == 0)) //Linha 4/Coluna 3
-  {
-    tecla_pressionada = 11; //11 = # = SIM
-  }
+    {
+      tecla_pressionada = 11; //11 = # = SIM
+    }
 
-  if (n == 12)
-  {
-    acumuladora = tecla_pressionada * 1000;
-  }
-
-  if (n == 13)
-  {
-    acumuladora += tecla_pressionada * 100;
-  }
-
-  if (n == 14)
-  {
-    acumuladora += tecla_pressionada * 10;
-  }
-
-  if (n == 15)
-  {
-    acumuladora += tecla_pressionada * 1;
-    flag_transf_dados = 0;
-    n = 0;
-  }
+ 
   //Serial.print("acumuladora:");
   //Serial.println(acumuladora);
     
@@ -812,31 +678,37 @@ void maquina_menu()
           if(tecla_pressionada == 1)	// estado 1 da máquina do menu
           {
             estado_menu = 1;
+            //flag_botao = 0;
           }
 
           else if(tecla_pressionada == 2)	// estado 1 da máquina do menu
           {
             estado_menu = 2;
+            //flag_botao = 0;
           }
           
           else if(tecla_pressionada == 3)	// estado 1 da máquina do menu
           {
             estado_menu = 3;
+            //flag_botao = 0;
           }
 
           else if(tecla_pressionada == 4)	// estado 1 da máquina do menu
           {
             estado_menu = 4;
+            //flag_botao = 0;
           }
 
           else if(tecla_pressionada == 5)	// estado 1 da máquina do menu
           {
             estado_menu = 5;
+            //flag_botao = 0;
           }
 
           else
           {
             estado_menu = 0;
+            //flag_botao = 0;
           }
 
           break;
@@ -853,11 +725,13 @@ void maquina_menu()
           if(tecla_pressionada == 10)	//10 = * = NAO
           {
             estado_menu = 12;
+            //flag_botao = 0;
           }
 
           else if (tecla_pressionada == 11)	//11 = # = SIM
           {
             estado_menu = 6;
+            //flag_botao = 0;
           }
 
           break;
@@ -874,11 +748,13 @@ void maquina_menu()
           if(tecla_pressionada == 10)	//10 = * = NAO
           {
             estado_menu = 12;
+            //flag_botao = 0;
           }
 
           else if (tecla_pressionada == 11)	//11 = # = SIM
           {
             estado_menu = 7;
+            //flag_botao = 0;
           }
 
           break;
@@ -895,11 +771,13 @@ void maquina_menu()
           if(tecla_pressionada == 10)	//10 = * = NAO
           {
             estado_menu = 12;
+            //flag_botao = 0;
           }
 
           else if (tecla_pressionada == 11)	//11 = # = SIM
           {
             estado_menu = 8;
+            //flag_botao = 0;
           }
 
           break;
@@ -916,11 +794,13 @@ void maquina_menu()
           if(tecla_pressionada == 10)	//10 = * = NAO
           {
             estado_menu = 12;
+            //flag_botao = 0;
           }
 
           else if (tecla_pressionada == 11)	//11 = # = SIM
           {
             estado_menu = 9;
+            //flag_botao = 0;
           }
 
           break;
@@ -937,11 +817,14 @@ void maquina_menu()
           if(tecla_pressionada == 10)	//10 = * = NAO
           {
             estado_menu = 12;
+            //flag_botao = 0;
           }
 
           else if (tecla_pressionada == 11)	//11 = # = SIM
           {
+            acumuladora = 0;
             estado_menu = 11;
+            //flag_botao = 0;
           }
 
           break;
@@ -966,7 +849,7 @@ void maquina_menu()
           gravado = p/2;
           //Serial.print("gravado: ");
           Serial.println(gravado);
-          disponivel = 1023 - gravado;
+          disponivel = 1022 - gravado;
           //Serial.print("disponivel: ");
           Serial.println(disponivel);
           //Config do LCD:
@@ -1021,6 +904,7 @@ void maquina_menu()
           Serial.print("acumuladora:");
           Serial.println(acumuladora);
           //Falta fazer essa maquina
+          estado_menu = 0;
           break;
         }
     
@@ -1028,16 +912,74 @@ void maquina_menu()
         {
         
           //Config do LCD:
-            lcd.setCursor(0, 0); //Define a posição 0 da linha 0 para começar a escrever
-            lcd.print("TRANSF. DADOS   "); //Escreve "PARADO" e apaga tudo na sua frente se houver 
-            lcd.setCursor(0, 1); //Define a posição 0 da linha 1 para começar a escrever
-            lcd.print("ESC. QTDE: "); //Escreve "PARADO" e apaga tudo na sua frente se houver
+          lcd.setCursor(0, 0); //Define a posição 0 da linha 0 para começar a escrever
+          lcd.print("TRANSF. DADOS   "); //Escreve "PARADO" e apaga tudo na sua frente se houver 
+          lcd.setCursor(0, 1); //Define a posição 0 da linha 1 para começar a escrever
+          lcd.print("ESC. QTDE: "); //Escreve "PARADO" e apaga tudo na sua frente se houver
 
-            flag_transf_dados = 1;
+          //Serial.print("flag_botao: ");
+          //Serial.println(flag_botao);
 
+
+          if((n < 14) &&  (flag_botao == 1))
+          {
+            if (tecla_pressionada != 11)
+            {
+              n++;
+              lcd.setCursor(n, 1); //Define a posição 0 da linha 1 para começar a escrever
+              Serial.print("tecla pressionada: ");
+              Serial.println(tecla_pressionada);
+              lcd.print(tecla_pressionada);
+            }
+          }
+
+          if ((n == 11) && (flag_botao == 1))
+            {
+              acumuladora = tecla_pressionada * 1000;
+              Serial.print("acumuladora:");
+              Serial.println(acumuladora);
+              flag_botao = 0;
+            }
+
+          if ((n == 12) && (flag_botao == 1))
+            {
+              acumuladora += tecla_pressionada * 100;
+              Serial.print("acumuladora:");
+              Serial.println(acumuladora);
+              flag_botao = 0;
+            }
+
+          if ((n == 13) && (flag_botao == 1))
+            {
+              acumuladora += tecla_pressionada * 10;
+              Serial.print("acumuladora:");
+              Serial.println(acumuladora);
+              flag_botao = 0;
+            }
+
+          if ((n == 14) && (flag_botao == 1) && (tecla_pressionada != 11))
+            {
+              acumuladora += tecla_pressionada * 1;
+              Serial.print("acumuladora:");
+              Serial.println(acumuladora);
+              flag_botao = 0;
+            }
+
+          if(tecla_pressionada == 10)	//10 = * = NAO
+          {
+            n = 10;
+            estado_menu = 12;
+            flag_botao = 0;
+          }
+
+          else if ((tecla_pressionada == 11) && (n == 14))	//11 = # = SIM
+          {
+            n = 10;
             estado_menu = 10;
+            flag_botao = 0;
+          }
 
-            break;
+          break;
 
         }
     case 12:
