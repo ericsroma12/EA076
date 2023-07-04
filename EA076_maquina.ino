@@ -225,7 +225,7 @@ void loop()
     float voltage = ADC * (1.1/ 1023.0); 	//Equação que converte o valor da cadeia binária da conversão analógica-digital em tensão
     temperatura = (1.1*100*ADC)/(1024); //Equação que converte o valor da cadeia binária da conversão analógica-digital no valor da temperatura medida pelo sensor 
     separa(temperatura); //Chama a função para separar os dígitos do valor lido de temperatura para ser mostrado nos displays da maneira desejada
-    if ((flag_coleta == 1) && (p < 2046))
+    if ((flag_coleta == 1) && (p < 2044))
     {
       //Serial.println("Entrei armazena_temperatura");
       p = armazena_temperatura();
@@ -234,10 +234,10 @@ void loop()
     {
       //Config do LCD:
       lcd.setCursor(0, 0); //Define a posição 0 da linha 0 para começar a escrever
-      lcd.print("                "); // Apaga tudo o que tiver escrito anteriormente nessa linha
       lcd.print("MEMORIA CHEIA!"); //Escreve "PARADO" e apaga tudo na sua frente se houver
       lcd.setCursor(0, 1); //Define a posição 0 da linha 1 para começar a escrever
       lcd.print("                "); // Apaga tudo o que tiver escrito anteriormente nessa linha
+      estado_menu = 0;
     } 
     flag_amostra_temp =0; 		//A flag amostra_temp é zerada indicando que foi feita a amostragem da temperatura e será esperado que a variávelvel 'contador' seja igual a 1250 novamente (período) para que seja feita uma nova atualização do valor da temperatura nos displays    
     contador_amostra_temp =0; 			//Atualização já feita, a variável 'contador_amostra_temp' é zerada indicando que é preciso passar um novo período (1250*1.6ms = 2s) para fazer uma nova amostragem da temperatura do sensor
@@ -389,12 +389,14 @@ unsigned int armazena_temperatura()
   if (p!=0)
     p++;
   escrever(p, byte1); //0x7fe = 2047 (última posição da memória) => Escrevo o primeiro byte do ponteiro em 2047
+   _delay_ms(5);
   //Serial.print("Valor byte1: ");
   //Serial.println(ler(ponteiro));
   p++;
   //Serial.print("armazena_temperatura(): ponteiro:");
   //Serial.println(ponteiro); 
   escrever(p, byte2);
+   _delay_ms(5);
   //Serial.print("Valor byte2: ");
   //Serial.println(ler(ponteiro));
   //p++;
@@ -404,6 +406,7 @@ unsigned int armazena_temperatura()
   p2 = p % 100;
   //p++;
   escrever(0x7fe, p1);
+   _delay_ms(5);
   escrever(0x7ff, p2);
   //Serial.print("p3: ");
   //Serial.println(p3);
@@ -417,6 +420,7 @@ void reset()
 {
   p = 0;
   escrever(0x7fe, 0x00);
+   _delay_ms(5);
   escrever(0x7ff, 0x00);
   //Serial.print("Leitura da posicao 2046");
   //Serial.println(ler(0x7fe));
